@@ -4,8 +4,11 @@ services:
     image: postgres:17
     container_name: task-manager-db
     restart: unless-stopped
-    env_file:
-      - .env
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -24,8 +27,11 @@ services:
       dockerfile: Dockerfile
     container_name: task-manager-api
     restart: unless-stopped
-    env_file:
-      - .env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -42,13 +48,16 @@ services:
     image: dpage/pgadmin4
     container_name: task-manager-pgadmin
     restart: unless-stopped
-    env_file:
-      - .env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - "${PGADMIN_PORT}:80"
+      - "127.0.0.1:${PGADMIN_PORT}:80"
     depends_on:
       db:
         condition: service_healthy
