@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create CI environment file
+        run: cp .env.example .env
+
+      - name: Build Docker image
+        run: docker build -t task-manager-api:${{ github.sha }} .
+
+      - name: Start application stack
+        run: docker compose up -d --build
+
+      - name: Show running containers
+        run: docker compose ps
+
+      - name: Wait for API health
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:8000/health; then
+              echo "API is healthy"
+              exit 0
+            fi
+
+            echo "Waiting for API..."
+            sleep 2
+          done
+
+          echo "API failed to become healthy"
+          docker compose ps
+          docker compose logs
+          exit 1
+
+      - name: Test API health endpoint
+        run: curl --fail --show-error http://localhost:8000/health
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
